@@ -1,2 +1,2 @@
 
-# types directory structure as per the sdk dir structure directory
+# types directory structure as per the openapi dir json files structure 
