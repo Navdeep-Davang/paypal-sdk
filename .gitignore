@@ -1,0 +1,28 @@
+# Node.js dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Build files
+dist/
+out/
+*.log
+
+# TypeScript output
+*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE / Editor settings
+.vscode/
+.idea/
+.DS_Store
+
+# Coverage and testing
+coverage/
+jest/
