@@ -1,5 +1,6 @@
 // reporting_transactions_v1 zod 
-// Total 55 types, while its json has 54 types(as per ai)
+// Its json has 54 types(as per ai)
+// Total Exported ZodSchemas 55
 
 import { z } from 'zod';
 

@@ -1,5 +1,6 @@
 // payments_payouts_batch_v1 zod
-// Total types 42, while its json has 39 types (as per ai)
+// Its json has 39 types (as per ai)
+// Total Exported ZodSchemas 42 
 
 import { z } from 'zod';
 
