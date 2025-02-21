@@ -1,6 +1,6 @@
 // invoicing_v2.json zod
-
-// Total types 88 
+// Its json has 103 (as by ai)
+// Total Exported ZodSchemas 105
 
 import { z } from 'zod';
 
@@ -531,6 +531,96 @@ const PaypalRequestIdParameterSchema = z.string();
 const TemplateIdParameterSchema = z.string();
 
 
+// --- Remaining Schemas ---
+
+const _400Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const _403Schema = z.object({
+   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const _422Schema = z.object({
+   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const PercentageSchema = z.string().regex(/^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$/);
+
+const SearchDataSchema = z.object({
+  recipient_email: z.string().max(254).optional(),
+  recipient_first_name: z.string().max(140).optional(),
+  recipient_last_name: z.string().max(140).optional(),
+  recipient_business_name: z.string().max(300).optional(),
+  invoice_number: z.string().max(25).optional(),
+  status: z.array(z.string()).max(5).optional(),  // Assuming invoice_status is meant here.  If not string, replace z.string() with the correct enum/schema reference
+  reference: z.string().max(120).optional(),
+  currency_code: CurrencyCodeSchema.optional(),
+  memo: z.string().max(500).optional(),
+  total_amount_range: z.lazy(() => AmountRangeSchema).optional(),
+  invoice_date_range: z.lazy(() => DateRangeSchema).optional(),
+  due_date_range: z.lazy(() => DateRangeSchema).optional(),
+  payment_date_range: z.lazy(() => DateTimeRangeSchema).optional(),
+  creation_date_range: z.lazy(() => DateTimeRangeSchema).optional(),
+  archived: z.boolean().optional(),
+  fields: z.array(z.string()).optional()
+});
+
+const InvoicesSearchInvoices400Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplateItemFieldSchema = z.enum(["ITEMS_QUANTITY", "ITEMS_DESCRIPTION", "ITEMS_DATE", "ITEMS_DISCOUNT", "ITEMS_TAX"]);
+
+const TemplateSchema = z.object({
+  id: z.string().max(30).readonly().optional(),
+  name: z.string().min(1).max(500),
+  default_template: z.boolean().optional(),
+  template_info: z.lazy(() => TemplateInfoSchema).optional(),
+  settings: z.lazy(() => TemplateSettingsSchema).optional(),
+  unit_of_measure: z.enum(["QUANTITY", "HOURS", "AMOUNT"]).optional(),
+  standard_template: z.boolean().readonly().optional(),
+  links: z.array(LinkDescriptionSchema).readonly().optional()
+});
+
+const TemplatesSchema = z.object({
+  addresses: z.array(AddressPortableSchema).readonly().optional(),
+  emails: z.array(EmailAddressSchema).readonly().optional(), // Assuming it's an array, otherwise, remove array
+  phones: z.array(PhoneDetailSchema).optional(),
+  templates: z.array(z.lazy(() => TemplateSchema)).optional(),
+  links: z.array(LinkDescriptionSchema).readonly().optional()
+});
+
+const TemplatesCreate400Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplatesCreate422Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplatesGet403Schema = z.object({
+   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplatesUpdate400Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplatesUpdate422Schema = z.object({
+ details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const TemplatesDelete403Schema = z.object({
+  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+});
+
+const RefundReferenceSchema = z.object({
+  refund_id: z.string().readonly().optional()
+});
+const CorrectEmailAddressSchema = z.string().min(3).max(254).regex(/^.+@[^"\\-].+$/);
+
+
 // --- Exports ---
 export {
   ErrorDetailsSchema,
@@ -620,5 +710,22 @@ export {
   SendToRecipientParameterSchema,
   SendToInvoicerParameterSchema,
   PaypalRequestIdParameterSchema,
-  TemplateIdParameterSchema
+  TemplateIdParameterSchema,
+  _400Schema,
+  _403Schema,
+  _422Schema,
+  PercentageSchema,
+  SearchDataSchema,
+  InvoicesSearchInvoices400Schema,
+  TemplateItemFieldSchema,
+  TemplateSchema,
+  TemplatesSchema,
+  TemplatesCreate400Schema,
+  TemplatesCreate422Schema,
+  TemplatesGet403Schema,
+  TemplatesUpdate400Schema,
+  TemplatesUpdate422Schema,
+  TemplatesDelete403Schema,
+  RefundReferenceSchema,
+  CorrectEmailAddressSchema
 };
