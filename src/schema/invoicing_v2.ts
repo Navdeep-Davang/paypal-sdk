@@ -1,6 +1,6 @@
 // invoicing_v2.json zod
 // Its json has 103 (as by ai)
-// Total Exported ZodSchemas 105
+// Total Exported ZodSchemas 106
 
 import { z } from 'zod';
 
@@ -264,13 +264,19 @@ const DateTimeRangeSchema = z.object({
     end: true
 });
 
+const TaxSchema = z.object({
+  name: z.string().max(100),
+  percent: z.string().regex(/^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$/),
+  amount: z.lazy(()=>AmountSchema).readonly().optional()
+}).required({ name: true, percent: true });
+
 const ItemSchema = z.object({
   id: z.string().max(22).readonly().optional(),
   name: z.string().max(200).optional(),
   description: z.string().max(1000).optional(),
   quantity: z.string().max(14).min(0).optional(),
   unit_amount: AmountSchema,
-  tax: z.unknown().optional(), //TODO::
+  tax: TaxSchema.optional(),
   item_date: DateNoTimeSchema.optional(),
   discount: DiscountSchema.optional(),
   unit_of_measure: z.enum(["QUANTITY", "HOURS", "AMOUNT"]).optional()
@@ -278,15 +284,6 @@ const ItemSchema = z.object({
     name: true,
     quantity: true,
     unit_amount: true
-});
-
-const TaxSchema = z.object({
-  name: z.string().max(100).optional(),
-  percent: z.string().regex(/^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$/).optional(),
-  amount: AmountSchema.readonly().optional()
-}).required({
-    name: true,
-    percent: true
 });
 
 const PartialPaymentSchema = z.object({
@@ -417,9 +414,6 @@ const InvoiceSchema = z.object({
   links: z.array(LinkDescriptionSchema).readonly().optional()
 }).required({ detail: true });
 
-const InvoicesCreate400Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
-});
 
 const NotificationSchema = z.object({
   subject: z.string().max(4000).optional(),
@@ -429,46 +423,224 @@ const NotificationSchema = z.object({
   additional_recipients: z.array(EmailAddressSchema).max(100).optional()
 });
 
+
+
+// Define Invoices error types directly as tuples
+const InvoicesErrorTypes = {
+  INVALID_STRING_MAX_LENGTH: z.object({
+      issue: z.literal("INVALID_STRING_MAX_LENGTH"),
+      description: z.enum(["the value of a field is too long."]),
+  }),
+  INVALID_STRING_LENGTH: z.object({
+      issue: z.literal("INVALID_STRING_LENGTH"),
+      description: z.enum(["the value of a field is either too short or too long."]),
+  }),
+  INVALID_ARRAY_MAX_ITEMS: z.object({
+      issue: z.literal("INVALID_ARRAY_MAX_ITEMS"),
+      description: z.enum(["the number of items in an array parameter is too large.",
+       "Only maximum of 100 email address is supported in additional recipients."]),
+  }),
+  INVALID_PARAMETER_SYNTAX: z.object({
+      issue: z.literal("INVALID_PARAMETER_SYNTAX"),
+      description: z.enum(["the value of a field does not conform to the expected format."]),
+  }),
+  CANNOT_REMIND_INVOICE: z.object({
+      issue: z.literal("CANNOT_REMIND_INVOICE"),
+      description: z.enum(["You cannot remind an invoice which is in DRAFT status. Only UNPAID, SENT and PARTIALLY_PAID invoices can be reminded."]),
+  }),
+  CANNOT_CANCEL_DRAFT_INVOICE: z.object({
+      issue: z.literal("CANNOT_CANCEL_DRAFT_INVOICE"),
+      description: z.enum(["Draft invoice cannot be canceled."]),
+  }),
+  CANNOT_CANCEL_PAID_INVOICE: z.object({
+      issue: z.literal("CANNOT_CANCEL_PAID_INVOICE"),
+      description: z.enum(["Cannot cancel a paid or partially paid invoice."]),
+  }),
+  CANNOT_CANCEL_REFUNDED_INVOICE: z.object({
+      issue: z.literal("CANNOT_CANCEL_REFUNDED_INVOICE"),
+      description: z.enum(["Cannot cancel a refunded or partially refunded invoice."]),
+  }),
+   CANNOT_CANCEL_SCHEDULED_INVOICE: z.object({
+      issue: z.literal("CANNOT_CANCEL_SCHEDULED_INVOICE"),
+      description: z.enum(["Cannot cancel a scheduled invoice."]),
+  }),
+  INVOICE_CANCELED_ALREADY: z.object({
+      issue: z.literal("INVOICE_CANCELED_ALREADY"),
+      description: z.enum(["Invoice is already cancelled."]),
+  }),
+  MISSING_REQUIRED_PARAMETER: z.object({
+      issue: z.literal("MISSING_REQUIRED_PARAMETER"),
+      description: z.enum(["Payment method is missing. Please provide a valid payment method."]),
+  }),
+  INVALID_PAYMENT_METHOD: z.object({
+      issue: z.literal("INVALID_PAYMENT_METHOD"),
+      description: z.enum(["The value provided is not an acceptable method of payment."]),
+  }),
+  NOT_SUPPORTED: z.object({
+      issue: z.literal("NOT_SUPPORTED"),
+      description: z.enum(["Currency code is not supported."]),
+  }),
+      VALUE_CANNOT_BE_ZERO: z.object({
+      issue: z.literal("VALUE_CANNOT_BE_ZERO"),
+      description: z.enum(["Payment amount cannot be zero. Please provide a valid amount."]),
+  }),
+  INVALID_DECIMAL_VALUE: z.object({
+      issue: z.literal("INVALID_DECIMAL_VALUE"),
+      description: z.enum(["Payment amount value is invalid. Can have non-negative value with maximum 7 digits and upto 2 fractions."]),
+  }),
+  INVALID_INTEGER_VALUE: z.object({
+      issue: z.literal("INVALID_INTEGER_VALUE"),
+      description: z.enum(["Payment amount value is invalid. Can have non-negative value with maximum 6 digits."]),
+  }),
+  PAYMENT_AMOUNT_GREATER_THAN_AMOUNT_DUE: z.object({
+      issue: z.literal("PAYMENT_AMOUNT_GREATER_THAN_AMOUNT_DUE"),
+      description: z.enum(["Payment amount is greater than the amount due."]),
+  }),
+  INVALID_INVOICE_TYPE: z.object({
+      issue: z.literal("INVALID_INVOICE_TYPE"),
+      description: z.enum(["The invoice type is not valid for paying an invoice."]),
+  }),
+  CANNOT_PROCESS_PAYMENTS: z.object({
+      issue: z.literal("CANNOT_PROCESS_PAYMENTS"),
+      description: z.enum(["Current invoice state does not support payment processing."]),
+  }),
+   CANNOT_DELETE_EXTERNAL_PAYMENT: z.object({
+      issue: z.literal("CANNOT_DELETE_EXTERNAL_PAYMENT"),
+      description: z.enum(["The external payment cannot be deleted as the recorded refund cannot exceed the recored payment for an invoice."]),
+  }),
+      INVALID_REFUND_METHOD: z.object({
+      issue: z.literal("INVALID_REFUND_METHOD"),
+      description: z.enum(["The value provided is not an acceptable method of refund."]),
+  }),
+      INVALID_REFUND_AMOUNT: z.object({
+      issue: z.literal("INVALID_REFUND_AMOUNT"),
+      description: z.enum(["Recorded refunds cannot exceed recorded payments."]),
+  }),
+  CANNOT_PROCESS_REFUNDS: z.object({
+      issue: z.literal("CANNOT_PROCESS_REFUNDS"),
+      description: z.enum(["Current invoice state does not support refunds."]),
+  }),
+  INVALID_INTEGER_MAX_VALUE: z.object({
+       issue: z.literal("INVALID_INTEGER_MAX_VALUE"),
+       description: z.enum(["Value exceeds max value."])
+  }),
+  INVALID_INTEGER_MIN_VALUE: z.object({
+       issue: z.literal("INVALID_INTEGER_MIN_VALUE"),
+       description: z.enum(["Value less than minimum value."])
+  }), 
+};
+
+
+// Invoices Schemas for each error code
+const InvoicesCreate400Schema = z.object({
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.INVALID_STRING_MAX_LENGTH,
+    InvoicesErrorTypes.INVALID_STRING_LENGTH,
+    InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX,
+  ])).optional(),
+});
+
 const InvoicesRemind400Schema = z.object({
-  details: z.array(z.any()).optional() // TODO:
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.INVALID_STRING_MAX_LENGTH,
+    InvoicesErrorTypes.INVALID_ARRAY_MAX_ITEMS,
+  ])).optional(),
 });
 
 const InvoicesRemind422Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.CANNOT_REMIND_INVOICE,
+  ])).optional(),
 });
 
 const InvoicesCancel400Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.INVALID_STRING_MAX_LENGTH,
+    InvoicesErrorTypes.INVALID_ARRAY_MAX_ITEMS,
+  ])).optional(),
 });
 
 const InvoicesCancel422Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.CANNOT_CANCEL_DRAFT_INVOICE,
+    InvoicesErrorTypes.CANNOT_CANCEL_PAID_INVOICE,
+    InvoicesErrorTypes.CANNOT_CANCEL_REFUNDED_INVOICE,
+    InvoicesErrorTypes.CANNOT_CANCEL_SCHEDULED_INVOICE,
+    InvoicesErrorTypes.INVOICE_CANCELED_ALREADY,
+  ])).optional(),
+});
+
+const InvoicesPayments400Schema = z.object({
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.MISSING_REQUIRED_PARAMETER,
+    InvoicesErrorTypes.INVALID_PAYMENT_METHOD,
+    InvoicesErrorTypes.NOT_SUPPORTED,
+    InvoicesErrorTypes.INVALID_STRING_LENGTH,
+    InvoicesErrorTypes.VALUE_CANNOT_BE_ZERO,
+    InvoicesErrorTypes.INVALID_DECIMAL_VALUE,
+    InvoicesErrorTypes.INVALID_INTEGER_VALUE,
+     InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX
+  ])).optional()
+});
+
+const InvoicesPayments422Schema = z.object({
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.PAYMENT_AMOUNT_GREATER_THAN_AMOUNT_DUE,
+    InvoicesErrorTypes.INVALID_INVOICE_TYPE,
+    InvoicesErrorTypes.CANNOT_PROCESS_PAYMENTS
+  ])).optional()
+});
+
+const InvoicesPaymentsDelete422Schema = z.object({
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.CANNOT_DELETE_EXTERNAL_PAYMENT
+  ])).optional()
+});
+
+const InvoicesRefunds400Schema = z.object({
+     details: z.array(z.discriminatedUnion("issue", [
+       InvoicesErrorTypes.MISSING_REQUIRED_PARAMETER,
+        InvoicesErrorTypes.INVALID_REFUND_METHOD,
+       InvoicesErrorTypes.INVALID_STRING_LENGTH,
+        InvoicesErrorTypes.NOT_SUPPORTED,
+        InvoicesErrorTypes.VALUE_CANNOT_BE_ZERO,
+         InvoicesErrorTypes.INVALID_DECIMAL_VALUE,
+          InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX,
+          InvoicesErrorTypes.INVALID_INTEGER_VALUE
+  ])).optional()
+});
+
+const InvoicesRefunds422Schema = z.object({
+      details: z.array(z.discriminatedUnion("issue", [
+        InvoicesErrorTypes.INVALID_REFUND_AMOUNT,
+        InvoicesErrorTypes.CANNOT_PROCESS_REFUNDS
+  ])).optional()
+});
+
+const InvoicesUpdate400Schema = z.object({
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.INVALID_STRING_MAX_LENGTH,
+    InvoicesErrorTypes.INVALID_STRING_LENGTH,
+    InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX,
+  ])).optional(),
+});
+
+const InvoicesGenerateQrCode400Schema = z.object({
+ details: z.array(z.discriminatedUnion("issue", [
+     InvoicesErrorTypes.INVALID_INTEGER_MAX_VALUE,
+       InvoicesErrorTypes.INVALID_INTEGER_MIN_VALUE,
+        InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX
+  ])).optional()
 });
 
 const PaymentReferenceSchema = z.object({
   payment_id: z.string().readonly().optional()
 });
 
-const InvoicesPayments400Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
-});
-
-const InvoicesPayments422Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
-});
-
-const InvoicesPaymentsDelete422Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
-});
-
 const QrConfigSchema = z.object({
   width: z.number().int().min(150).max(500).default(500).optional(),
   height: z.number().int().min(150).max(500).default(500).optional(),
   action: z.string().regex(new RegExp("(?i)^(pay|details)$")).max(7).default("pay").optional(),
-});
-
-const InvoicesGenerateQrCode400Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
 });
 
 const InvoiceNumberSchema = z.object({
@@ -481,13 +653,15 @@ const TemplateDisplayPreferenceSchema = z.object({
   hidden: z.boolean().default(false).optional()
 });
 
+const TemplateItemFieldSchema = z.enum(["ITEMS_QUANTITY", "ITEMS_DESCRIPTION", "ITEMS_DATE", "ITEMS_DISCOUNT", "ITEMS_TAX"]);
+
 const TemplateItemSettingSchema = z.object({
-  field_name: z.string().optional(),  //TODO::
-  display_preference: TemplateDisplayPreferenceSchema.optional()
+  field_name: TemplateItemFieldSchema,
+  display_preference: TemplateDisplayPreferenceSchema
 });
 
 const TemplateSubtotalSettingSchema = z.object({
-  field_name: TemplateSubtotalFieldSchema.optional(),  //TODO::
+  field_name: TemplateSubtotalFieldSchema.optional(), 
   display_preference: TemplateDisplayPreferenceSchema.optional()
 });
 
@@ -505,11 +679,6 @@ const TemplateInfoSchema = z.object({
   configuration: TemplateConfigurationSchema.optional(),
   amount: z.lazy(() => AmountSummaryDetailSchema).optional(),
   due_amount: MoneySchema.readonly().optional()
-});
-
-const RefundSchema = z.string(); // TODO:
-const InvoicesUpdate400Schema = z.object({
-  details: z.array(z.any()).optional()  // TODO:
 });
 
 const TemplateDetailSchema = z.object({
@@ -533,16 +702,52 @@ const TemplateIdParameterSchema = z.string();
 
 // --- Remaining Schemas ---
 
+// General Error Types (Reusable)
+const ErrorTypes = {
+  INVALID_INTEGER_MAX_VALUE: z.object({
+    issue: z.literal("INVALID_INTEGER_MAX_VALUE"),
+    description: z.literal("Value exceeds max value."),
+  }),
+  INVALID_INTEGER_MIN_VALUE: z.object({
+    issue: z.literal("INVALID_INTEGER_MIN_VALUE"),
+    description: z.literal("Value less than minimum value."),
+  }),
+  PERMISSION_DENIED: z.object({
+    issue: z.literal("PERMISSION_DENIED"),
+    description: z.literal("The requested invoice is not associated with the requested user."),
+  }),
+  USER_NOT_FOUND: z.object({
+    issue: z.literal("USER_NOT_FOUND"),
+    description: z.enum(["User is not associated with paypal based on invoicer email."]),
+  }),
+};
+
+
+// Schemas for each error code that uses the error types
+const Error400DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.INVALID_INTEGER_MAX_VALUE,
+  ErrorTypes.INVALID_INTEGER_MIN_VALUE,
+]);
+
+const Error403DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.PERMISSION_DENIED,
+]);
+
+const Error422DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.USER_NOT_FOUND,
+]);
+
+// Main Error Schemas
 const _400Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(Error400DetailsSchema).optional(),
 });
 
 const _403Schema = z.object({
-   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(Error403DetailsSchema).optional(),
 });
 
 const _422Schema = z.object({
-   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(Error422DetailsSchema).optional(),
 });
 
 const PercentageSchema = z.string().regex(/^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$/);
@@ -567,10 +772,15 @@ const SearchDataSchema = z.object({
 });
 
 const InvoicesSearchInvoices400Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(z.discriminatedUnion("issue", [
+    InvoicesErrorTypes.INVALID_INTEGER_MAX_VALUE,
+    InvoicesErrorTypes.INVALID_INTEGER_MIN_VALUE,
+    InvoicesErrorTypes.INVALID_STRING_MAX_LENGTH,
+    InvoicesErrorTypes.INVALID_ARRAY_MAX_ITEMS,
+    InvoicesErrorTypes.INVALID_STRING_LENGTH,
+    InvoicesErrorTypes.INVALID_PARAMETER_SYNTAX,
+  ])).optional(),
 });
-
-const TemplateItemFieldSchema = z.enum(["ITEMS_QUANTITY", "ITEMS_DESCRIPTION", "ITEMS_DATE", "ITEMS_DISCOUNT", "ITEMS_TAX"]);
 
 const TemplateSchema = z.object({
   id: z.string().max(30).readonly().optional(),
@@ -591,29 +801,102 @@ const TemplatesSchema = z.object({
   links: z.array(LinkDescriptionSchema).readonly().optional()
 });
 
+
+
+// Define Templates error types
+const TemplatesErrorTypes = {
+  TEMPLATE_NAME_ALREADY_EXISTS: z.object({
+    issue: z.enum(["TEMPLATE_NAME_ALREADY_EXISTS"]),
+    description: z.enum(["Template name already exists."]),
+  }),
+  INVALID_STRING_LENGTH: z.object({
+    issue: z.enum(["INVALID_STRING_LENGTH"]),
+    description: z.enum([
+      "Template name length should be between 1 and 500.",
+      "Currency code length should be 3 characters.",
+      "the value of a field is either too short or too long.",
+    ]),
+  }),
+  INVALID_STRING_MAX_LENGTH: z.object({
+    issue: z.enum(["INVALID_STRING_MAX_LENGTH"]),
+    description: z.enum(["Value of the field is too long."]),
+  }),
+  INVALID_PARAMETER_SYNTAX: z.object({
+    issue: z.enum(["INVALID_PARAMETER_SYNTAX"]),
+    description: z.enum(["Value of the field does not conform to the expected format."]),
+  }),
+  CANNOT_CANCEL_DRAFT_INVOICE: z.object({
+    issue: z.enum(["CANNOT_CANCEL_DRAFT_INVOICE"]),
+    description: z.enum(["Cannot cancel a draft invoice."]),
+  }),
+  PERMISSION_DENIED: z.object({
+    issue: z.enum(["PERMISSION_DENIED"]),
+    description: z.enum(["The requested template is not associated with the requested user."]),
+  }),
+  CANNOT_DELETE_GLOBAL_TEMPLATE: z.object({
+    issue: z.enum(["CANNOT_DELETE_GLOBAL_TEMPLATE"]),
+    description: z.enum(["Global templates cannot be deleted."]),
+  }),
+};
+
+
+// Templates Schemas for each error code
+const TemplatesCreate400ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.TEMPLATE_NAME_ALREADY_EXISTS,
+  TemplatesErrorTypes.INVALID_STRING_LENGTH,
+  TemplatesErrorTypes.INVALID_STRING_MAX_LENGTH,
+  TemplatesErrorTypes.INVALID_PARAMETER_SYNTAX,
+]);
+
+const TemplatesCreate422ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.CANNOT_CANCEL_DRAFT_INVOICE,
+]);
+
+const TemplatesGet403ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.PERMISSION_DENIED,
+]);
+
+const TemplatesUpdate400ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.TEMPLATE_NAME_ALREADY_EXISTS,
+  TemplatesErrorTypes.INVALID_STRING_LENGTH,
+  TemplatesErrorTypes.INVALID_STRING_MAX_LENGTH,
+  TemplatesErrorTypes.INVALID_PARAMETER_SYNTAX,
+]);
+
+const TemplatesUpdate422ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.CANNOT_CANCEL_DRAFT_INVOICE,
+]);
+
+const TemplatesDelete403ErrorSchema = z.discriminatedUnion("issue", [
+  TemplatesErrorTypes.PERMISSION_DENIED,
+  TemplatesErrorTypes.CANNOT_DELETE_GLOBAL_TEMPLATE,
+]);
+
+// Main Templates Error Schemas
 const TemplatesCreate400Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesCreate400ErrorSchema).optional(),
 });
 
 const TemplatesCreate422Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesCreate422ErrorSchema).optional(),
 });
 
 const TemplatesGet403Schema = z.object({
-   details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesGet403ErrorSchema).optional(),
 });
 
 const TemplatesUpdate400Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesUpdate400ErrorSchema).optional(),
 });
 
 const TemplatesUpdate422Schema = z.object({
- details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesUpdate422ErrorSchema).optional(),
 });
 
 const TemplatesDelete403Schema = z.object({
-  details: z.array(z.unknown()).optional() //TODO: add anyOf items
+  details: z.array(TemplatesDelete403ErrorSchema).optional(),
 });
+
 
 const RefundReferenceSchema = z.object({
   refund_id: z.string().readonly().optional()
@@ -689,6 +972,9 @@ export {
   InvoicesPayments400Schema,
   InvoicesPayments422Schema,
   InvoicesPaymentsDelete422Schema,
+  InvoicesRefunds400Schema,
+  InvoicesRefunds422Schema,
+  InvoicesUpdate400Schema,
   QrConfigSchema,
   InvoicesGenerateQrCode400Schema,
   InvoiceNumberSchema,
@@ -698,8 +984,6 @@ export {
   TemplateSubtotalSettingSchema,
   TemplateSettingsSchema,
   TemplateInfoSchema,
-  RefundSchema,
-  InvoicesUpdate400Schema,
   TemplateDetailSchema,
   PageParameterSchema,
   PageSizeParameterSchema,
