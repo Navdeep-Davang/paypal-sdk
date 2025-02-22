@@ -1,6 +1,7 @@
-// partner_referrals_v2 zod
+// customer_partner_referrals_v2 zod
 
-// Total Exported ZodSchemas 82
+// Its json has 94 types (given by ai)
+// Total Exported ZodSchemas 95
 
 import { z } from 'zod';
 
@@ -70,20 +71,61 @@ const PercentageSchema = z.string().regex(/^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$
 // --- Main Schemas ---
 
 const Error400Schema = z.object({
-    details: z.array(z.any()).optional()
+  name: z.enum(['INVALID_REQUEST']).optional(),
+  message: z.enum(['Request is not well-formed, syntactically incorrect, or violates schema.']).optional(),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(),
 });
 
 const Error401Schema = z.object({
-    details: z.array(z.any()).optional()
+    name: z.enum(['AUTHENTICATION_FAILURE']).optional(),
+    message: z.enum(['Authentication failed due to missing authorization header, or invalid authentication credentials.']).optional(),
+    details: z.array(ErrorDetailsSchema).optional(),
+    debug_id: z.string().optional(),
+    links: z.array(ErrorLinkDescriptionSchema).optional(),
 });
 
 const Error403Schema = z.object({
-    details: z.array(z.any()).optional()
+  name: z.enum(['NOT_AUTHORIZED']).optional(),
+  message: z.enum(['Authorization failed due to insufficient permissions.']).optional(),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(),
+});
+
+const Error404Schema = z.object({
+  name: z.enum(['RESOURCE_NOT_FOUND']).optional(),
+  message: z.enum(['The specified resource does not exist.']).optional(),
+  details: z.array(ErrorDetailsSchema).optional(), 
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(), 
+});
+
+const Error409Schema = z.object({
+  name: z.enum(['RESOURCE_CONFLICT']).optional(),
+  message: z.enum(['The server has detected a conflict while processing this request.']).optional(),
+  details: z.array(ErrorDetailsSchema).optional(), 
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(), 
+});
+
+const Error415Schema = z.object({
+  name: z.enum(['UNSUPPORTED_MEDIA_TYPE']).optional(),
+  message: z.enum(['The server does not support the request payload\'s media type.']).optional(),
+  details: z.array(z.any()).optional(), 
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(), 
 });
 
 const Error422Schema = z.object({
-    details: z.array(z.any()).optional()
+  name: z.enum(['UNPROCESSABLE_ENTITY']).optional(),
+  message: z.enum(['The requested action could not be performed, semantically incorrect, or failed business validation.']).optional(),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(),
 });
+
 
 const Error500Schema = z.object({
   name: z.enum(['INTERNAL_SERVER_ERROR']).optional(),
@@ -91,6 +133,14 @@ const Error500Schema = z.object({
   debug_id: z.string().optional(),
   links: z.array(ErrorLinkDescriptionSchema).optional(),
 });
+
+const Error503Schema = z.object({
+  name: z.enum(['SERVICE_UNAVAILABLE']).optional(),
+  message: z.enum(['Service Unavailable.']).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).optional(), // Assuming ErrorLinkDescriptionSchema exists
+});
+
 
 const ErrorDefaultSchema = z.any()
 
@@ -482,6 +532,107 @@ const ReferralDataResponseSchema = z.object({
 
 const PartnerReferralIdParameterSchema = z.string();
 
+
+// --- Reamaining Schemas ---
+
+const CurrencyCodeSchema = z.string().length(3);
+
+const CountryCode2Schema = z.string().regex(/^([A-Z]{2}|C2)$/).length(2);
+
+const BusinessSchema = z.object({
+  business_type: BusinessTypeInfoSchema.optional(), 
+  business_industry: BusinessIndustrySchema.optional(), 
+  business_incorporation: BusinessIncorporationSchema.optional(), 
+  names: z.array(BusinessNameDetailSchema).optional(), 
+  emails: z.array(EmailSchema).optional(),
+  website: z.string().url().optional(),
+  addresses: z.array(BusinessAddressDetailSchema).optional(), 
+  phones: z.array(BusinessPhoneDetailSchema).optional(), 
+  documents: z.array(BusinessDocumentSchema).optional(),
+});
+
+// --- General Error Schemas ---
+
+const ErrorTypes = {
+  INVALID_STRING_LENGTH: z.object({
+    issue: z.literal("INVALID_STRING_LENGTH"),
+    description: z.literal("the value of a field is either too short or too long"),
+  }),
+  INVALID_PARAMETER_SYNTAX: z.object({
+    issue: z.literal("INVALID_PARAMETER_SYNTAX"),
+    description: z.literal("the value of a field does not conform to the expected format"),
+  }),
+  INVALID_PARAMETER_VALUE: z.object({
+    issue: z.literal("INVALID_PARAMETER_VALUE"),
+    description: z.literal("the value of a field is invalid"),
+  }),
+  INVALID_ARRAY_LENGTH: z.object({
+    issue: z.literal("INVALID_ARRAY_LENGTH"),
+    description: z.literal("the number of items in an array parameter is too small or too large"),
+  }),
+  AUTHORIZATION_ERROR: z.object({
+    issue: z.literal("AUTHORIZATION_ERROR"),
+    description: z.literal("This API call is not authorized"),
+  }),
+  PERMISSION_DENIED: z.object({
+    issue: z.literal("PERMISSION_DENIED"),
+    description: z.literal("You do not have permission to access or perform operations on this resource."),
+  }),
+  USER_NOT_FOUND: z.object({
+    issue: z.literal("USER_NOT_FOUND"),
+    description: z.literal("Account for this Partner ID does not exist."),
+  }),
+  ACCOUNT_STATUS_ERROR: z.object({
+    issue: z.literal("ACCOUNT_STATUS_ERROR"),
+    description: z.string(), 
+  }),
+  PRODUCT_PPCP_UNAUTHORIZED: z.object({
+    issue: z.literal("PRODUCT_PPCP_UNAUTHORIZED"),
+    description: z.literal("Account has not been configured to use PayPal Complete Payments"),
+  }),
+};
+
+// Schemas for each error code that uses the error types
+const Error400DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.INVALID_STRING_LENGTH,
+  ErrorTypes.INVALID_PARAMETER_SYNTAX,
+  ErrorTypes.INVALID_PARAMETER_VALUE,
+  ErrorTypes.INVALID_ARRAY_LENGTH,
+]);
+
+const Error401DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.AUTHORIZATION_ERROR,
+]);
+
+const Error403DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.PERMISSION_DENIED,
+]);
+
+const Error422DetailsSchema = z.discriminatedUnion("issue", [
+  ErrorTypes.USER_NOT_FOUND,
+  ErrorTypes.ACCOUNT_STATUS_ERROR,
+  ErrorTypes.PRODUCT_PPCP_UNAUTHORIZED,
+]);
+
+// Main Error Schemas - Using the structure from your Error400Schema example
+const _400Schema = z.object({
+  details: z.array(Error400DetailsSchema).optional(),
+});
+
+const _401Schema = z.object({
+  details: z.array(Error401DetailsSchema).optional(),
+});
+
+const _403Schema = z.object({
+  details: z.array(Error403DetailsSchema).optional(),
+});
+
+const _422Schema = z.object({
+  details: z.array(Error422DetailsSchema).optional(),
+});
+
+
+
 // --- Exports ---
 export {
   ErrorDetailsSchema,
@@ -497,8 +648,12 @@ export {
   Error400Schema,
   Error401Schema,
   Error403Schema,
+  Error404Schema,
+  Error409Schema,
+  Error415Schema,
   Error422Schema,
   Error500Schema,
+  Error503Schema,
   ErrorDefaultSchema,
   NameSchema,
   PersonNameTypeSchema,
@@ -531,6 +686,8 @@ export {
   BusinessAddressDetailSchema,
   BusinessPhoneTypeSchema,
   BusinessPhoneDetailSchema,
+  BusinessDocumentTypeSchema,
+  BusinessDocumentSchema,
   PercentageOfOwnershipSchema,
   IndividualBeneficialOwnerSchema,
   BusinessBeneficialOwnerSchema,
@@ -566,4 +723,11 @@ export {
   CreateReferralDataResponseSchema,
   ReferralDataResponseSchema,
   PartnerReferralIdParameterSchema,
+  CurrencyCodeSchema,
+  CountryCode2Schema,
+  BusinessSchema,
+  _400Schema,
+  _401Schema,
+  _403Schema,
+  _422Schema
 };
