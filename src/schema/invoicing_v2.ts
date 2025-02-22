@@ -151,7 +151,7 @@ const ContactNameAddressSchema = z.object({
   ...BusinessNameSchema.shape,   
 });
 
-const EmailAddressSchema = z.string().min(3).max(254).regex(/^.+@[^"\\-].+$/);
+const EmailAddressSchema = z.string().email().min(3).max(254);
 
 const PhoneSchema = z.object({
   country_code: z.string().min(1).max(3).regex(/^[0-9]{1,3}?$/),

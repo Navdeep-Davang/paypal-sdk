@@ -94,7 +94,7 @@ const CurrencyRangeSchema = z.object({
   maximum_amount: CurrencySchema.optional(),
 });
 
-const EmailAddressSchema = z.string().max(254).min(3).regex(/^.+@[^"\-].+$/);
+const EmailAddressSchema = z.string().email().min(3).max(254);
 
 const EmailContactSchema = z.object({
   email_address: EmailAddressSchema,

@@ -154,7 +154,7 @@ const TransactionInfoSchema = z.object({
     instrument_sub_type: z.string().min(1).max(64).optional(),
 });
 
-const EmailAddressSchema = z.string().max(254).min(3).regex(/^.+@[^"\-].+$/);
+const EmailAddressSchema = z.string().email().min(3).max(254);
 
 const PhoneSchema = z.object({
     country_code: z.string().min(1).max(3).regex(/^[0-9]{1,3}?$/),
