@@ -1,7 +1,7 @@
 
 // payments_payment_v2 zod 
 
-// Total Exported ZodSchemas 67
+// Total Exported ZodSchemas 69
 
 import { z } from 'zod';
 
@@ -479,6 +479,7 @@ export {
   NetworkTransactionReferenceSchema,
   SellerProtectionSchema,
   ActivityTimestampsSchema,
+  AuthorizationBaseSchema,
   AuthorizationSchema,
   RelatedIdsSchema,
   SupplementaryDataSchema,
@@ -495,6 +496,7 @@ export {
   ExchangeRateSchema,
   SellerReceivableBreakdownSchema,
   ProcessorResponseSchema,
+  CaptureBaseSchema,
   CaptureSchema,
   Capture2Schema,
   ReauthorizeRequestSchema,
