@@ -3,7 +3,7 @@
 // checkout_orders_v1 zod
 
 // Its json has 32 types (as per ai)
-// Total Exported ZodSchemas 43
+// Total Exported ZodSchemas 44
 
 import { z } from 'zod';
 
@@ -385,6 +385,7 @@ export {
   Error422Schema,
   Error500Schema,
   Error503Schema,
+  ErrorDefaultSchema,
   CurrencySchema,
   AmountDetailsSchema,
   AmountSchema,

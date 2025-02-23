@@ -3,7 +3,7 @@
 // billing_subscriptions_v1 zod
 
 // Its json has 112 types (as per ai)
-// Total Exported ZodSchemas 116
+// Total Exported ZodSchemas 117
 
 import { z } from 'zod';
 
@@ -1088,6 +1088,7 @@ export {
   CardSchema,
   PaymentSourceSchema,
   SubscriberRequestSchema,
+  LanguageSchema,
   PayeePaymentMethodPreferenceSchema,
   PaymentMethodSchema,
   ApplicationContextSchema,
