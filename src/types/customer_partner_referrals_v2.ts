@@ -1,3 +1,7 @@
+// customer_partner_referrals_v1 ts types 
+
+// Total 89 ts types
+
 import { z } from 'zod';
 import {
   ErrorDetailsSchema,
