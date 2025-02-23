@@ -1,3 +1,5 @@
+// catalogs_products_v1 ts types
+
 // Total 35 ts types 
 
 import { z } from 'zod';
