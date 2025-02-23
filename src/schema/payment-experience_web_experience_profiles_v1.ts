@@ -1,4 +1,4 @@
-// payment-experience_web_experience_profiles_v1.json zod
+// payment-experience_web_experience_profiles_v1 zod
 
 // Its Json Types are 18 (as per ai)
 // Total Exported ZodSchemas 19
