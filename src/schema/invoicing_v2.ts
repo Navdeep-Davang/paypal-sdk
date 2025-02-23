@@ -1,4 +1,4 @@
-// invoicing_v2.json zod
+// invoicing_v2 zod
 
 // Its json has 103 (as by ai)
 // Total Exported ZodSchemas 106
@@ -920,6 +920,7 @@ export {
   Error500Schema,
   Error503Schema,
   AmountSchema,
+  DiscountSchema,
   BusinessNameSchema,
   NameSchema,
   ContactNameAddressSchema,
