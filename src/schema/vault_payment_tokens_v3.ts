@@ -1,5 +1,11 @@
 // vault_payment_tokens_v3 zod
+
+// Its json has 72 types(as per ai) 
 //Total Exported ZodSchemas 68
+
+// --- Type sin the json and thezod schema doesnt match ---
+
+
 import { z } from 'zod';
 
 // --- Shared Schemas ---
