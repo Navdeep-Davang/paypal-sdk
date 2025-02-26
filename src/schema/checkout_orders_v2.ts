@@ -1567,6 +1567,18 @@ const OrdersTrackersPatch422Schema = z.object({
 });
 
 
+// --- Parameter type schemas ---
+
+const PaypalRequestIdParameterSchema = z.string().min(1).max(108);
+const PaypalPartnerAttributionIdParameterSchema = z.string().min(1).max(36);
+const PaypalClientMetadataIdParameterSchema = z.string().min(1).max(36);
+const PreferParameterSchema = z.string().min(1).max(25).regex(/^[a-zA-Z=]*$/).default("return=minimal");
+const IdParameterSchema = z.string().min(1).max(36).regex(/^[A-Z0-9]+$/);
+const FieldsParameterSchema = z.string().regex(/^[a-z_]*$/).optional();
+const PaypalAuthAssertionParameterSchema = z.string();
+const TrackerIdParameterSchema = z.string().min(1).max(36).regex(/^[A-Z0-9]+$/);
+
+
 
 
 // --- Exports ---
@@ -1779,4 +1791,12 @@ export {
   OrdersTrackersPatch403Schema,
   OrdersTrackersPatch404Schema,
   OrdersTrackersPatch422Schema,
+  PaypalRequestIdParameterSchema,
+  PaypalPartnerAttributionIdParameterSchema,
+  PaypalClientMetadataIdParameterSchema,
+  PreferParameterSchema,
+  IdParameterSchema,
+  FieldsParameterSchema,
+  PaypalAuthAssertionParameterSchema,
+  TrackerIdParameterSchema,
 };

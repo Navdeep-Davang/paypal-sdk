@@ -207,6 +207,14 @@ import {
   OrdersTrackersPatch403Schema,
   OrdersTrackersPatch404Schema,
   OrdersTrackersPatch422Schema,
+  PaypalRequestIdParameterSchema,
+  PaypalPartnerAttributionIdParameterSchema,
+  PaypalClientMetadataIdParameterSchema,
+  PreferParameterSchema,
+  IdParameterSchema,
+  FieldsParameterSchema,
+  PaypalAuthAssertionParameterSchema,
+  TrackerIdParameterSchema,
 } from '../schema/checkout_orders_v2';
 
 export type ErrorDetails = z.infer<typeof ErrorDetailsSchema>;
@@ -289,6 +297,7 @@ export type FullName = z.infer<typeof FullNameSchema>;
 export type ExperienceContextBase = z.infer<typeof ExperienceContextBaseSchema>;
 export type AltpayRecurringAttributesRequest = z.infer<typeof AltpayRecurringAttributesRequestSchema>;
 export type BancontactRequest = z.infer<typeof BancontactRequestSchema>;
+export type EmailAddress = z.infer<typeof EmailAddressSchema>;
 export type IpAddress = z.infer<typeof IpAddressSchema>;
 export type BlikExperienceContext = z.infer<typeof BlikExperienceContextSchema>;
 export type BlikSeamless = z.infer<typeof BlikSeamlessSchema>;
@@ -411,3 +420,11 @@ export type OrdersTrackersPatch400 = z.infer<typeof OrdersTrackersPatch400Schema
 export type OrdersTrackersPatch403 = z.infer<typeof OrdersTrackersPatch403Schema>;
 export type OrdersTrackersPatch404 = z.infer<typeof OrdersTrackersPatch404Schema>;
 export type OrdersTrackersPatch422 = z.infer<typeof OrdersTrackersPatch422Schema>;
+export type PaypalRequestIdParameter = z.infer<typeof PaypalRequestIdParameterSchema>;
+export type PaypalPartnerAttributionIdParameter = z.infer<typeof PaypalPartnerAttributionIdParameterSchema>;
+export type PaypalClientMetadataIdParameter = z.infer<typeof PaypalClientMetadataIdParameterSchema>;
+export type PreferParameter = z.infer<typeof PreferParameterSchema>;
+export type IdParameter = z.infer<typeof IdParameterSchema>;
+export type FieldsParameter = z.infer<typeof FieldsParameterSchema>;
+export type PaypalAuthAssertionParameter = z.infer<typeof PaypalAuthAssertionParameterSchema>;
+export type TrackerIdParameter = z.infer<typeof TrackerIdParameterSchema>;
