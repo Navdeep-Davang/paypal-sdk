@@ -1,7 +1,7 @@
 // vault_payment_tokens_v3 zod
 
 // Its json has 72 types(as per ai) 
-//Total Exported ZodSchemas 68
+//Total Exported ZodSchemas 79
 
 // --- Type sin the json and thezod schema doesnt match ---
 
@@ -10,15 +10,16 @@ import { z } from 'zod';
 
 // --- Shared Schemas ---
 
+const ErrorLocationSchema = z.enum(['body', 'path', 'query']).default('body');
+
 const ErrorDetailsSchema = z.object({
   field: z.string().optional(),
   value: z.string().optional(),
-  location: z.string().optional(), // TODO: Should reference ErrorLocationSchema
+  location: ErrorLocationSchema.optional(), 
   issue: z.string(),
   description: z.string().optional(),
 });
 
-const ErrorLocationSchema = z.enum(['body', 'path', 'query']).default('body');
 
 const ErrorLinkDescriptionSchema = z.object({
   href: z.string().min(0).max(20000).regex(/^.*$/),
@@ -90,7 +91,7 @@ const CardResponseSchema = z.object({
   last_digits: z.string().regex(/[0-9]{2,}/).min(2).max(4).readonly().optional(),
   brand: CardBrandSchema.readonly().optional(),
   expiry: DateYearMonthSchema.optional(),
-  billing_address: AddressEntitySchema.optional(), //TODO: Should reference AddressPortableSchema
+  billing_address: AddressEntitySchema.optional(),
   verification_status: CardVerificationStatusSchema.optional(),
   verification: CardVerificationDetailsSchema.optional(),
 });
@@ -355,6 +356,81 @@ const PageParameterSchema = z.number().int().min(1).default(1).optional();
 const TotalRequiredParameterSchema = z.boolean().default(false).optional();
 const IdParameterSchema = z.string().min(7).max(36).regex(/^[0-9a-zA-Z_-]+$/);
 
+
+// --- Remaining Schemas ---
+
+const Error400Schema = z.object({
+  name: z.enum(["INVALID_REQUEST"]),
+  message: z.enum(["Request is not well-formed, syntactically incorrect, or violates schema."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error401Schema = z.object({
+  name: z.enum(["AUTHENTICATION_FAILURE"]),
+  message: z.enum(["Authentication failed due to missing authorization header, or invalid authentication credentials."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error403Schema = z.object({
+  name: z.enum(["NOT_AUTHORIZED"]),
+  message: z.enum(["Authorization failed due to insufficient permissions."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error404Schema = z.object({
+  name: z.enum(["RESOURCE_NOT_FOUND"]),
+  message: z.enum(["The specified resource does not exist."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error409Schema = z.object({
+  name: z.enum(["RESOURCE_CONFLICT"]),
+  message: z.enum(["The server has detected a conflict while processing this request."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error415Schema = z.object({
+  name: z.enum(["UNSUPPORTED_MEDIA_TYPE"]),
+  message: z.enum(["The server does not support the request payload's media type."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error422Schema = z.object({
+  name: z.enum(["UNPROCESSABLE_ENTITY"]),
+  message: z.enum(["The requested action could not be performed, semantically incorrect, or failed business validation."]),
+  details: z.array(ErrorDetailsSchema).optional(),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error500Schema = z.object({
+  name: z.enum(["INTERNAL_SERVER_ERROR"]),
+  message: z.enum(["An internal server error occurred."]),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const Error503Schema = z.object({
+  name: z.enum(["SERVICE_UNAVAILABLE"]),
+  message: z.enum(["Service Unavailable."]),
+  debug_id: z.string().optional(),
+  links: z.array(ErrorLinkDescriptionSchema).min(0).max(10000).optional(),
+});
+
+const _3DsResultSchema = z.object({});
+
 // --- Exports ---
 
 export {
@@ -364,6 +440,7 @@ export {
   MerchantPartnerCustomerIdSchema,
   CustomerSchema,
   VaultIdSchema,
+  CardBrand,
   CardBrandSchema,
   DateYearMonthSchema,
   AddressEntitySchema,
@@ -425,5 +502,15 @@ export {
   PageSizeParameterSchema,
   PageParameterSchema,
   TotalRequiredParameterSchema,
-  IdParameterSchema
+  IdParameterSchema,
+  Error400Schema,
+  Error401Schema,
+  Error403Schema,
+  Error404Schema,
+  Error409Schema,
+  Error415Schema,
+  Error422Schema,
+  Error500Schema,
+  Error503Schema,
+  _3DsResultSchema,
 };
