@@ -96,7 +96,8 @@ import {
   Error500Schema,
   Error503Schema,
   CryptocurrencyQuantitySchema,
-  MessageSchema
+  MessageSchema,
+  DisputeSchema
 } from '../schema/customer_disputes_v1';
 
 export type ErrorDetails = z.infer<typeof ErrorDetailsSchema>;
@@ -195,3 +196,4 @@ export type Error503 = z.infer<typeof Error503Schema>;
 
 export type CryptocurrencyQuantity = z.infer<typeof CryptocurrencyQuantitySchema>;
 export type Message = z.infer<typeof MessageSchema>;
+export type Dispute = z.infer<typeof DisputeSchema>;

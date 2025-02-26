@@ -994,6 +994,36 @@ const MessageSchema = z.object({
   documents: z.array(DocumentSchema).optional(),
 });
 
+const DisputeSchema = z.object({
+  dispute_id: z.string().min(1).max(255).regex(/^[A-Za-z0-9-]+$/).readonly(),
+  create_time: DateTimeSchema.readonly(),
+  update_time: DateTimeSchema.readonly(),
+  disputed_transactions: z.array(TransactionInfoSchema).min(1).max(1000),
+  reason: DisputeReasonSchema.optional(),
+  status: StatusSchema.readonly().optional(),
+  dispute_amount: MoneySchema.optional(),
+  dispute_asset: CryptocurrencySchema.optional(),
+  fee_policy: FeePolicySchema.readonly().optional(),
+  external_reason_code: z.string().min(1).max(2000).optional(),
+  dispute_outcome: DisputeOutcomeSchema.readonly().optional(),
+  adjudications: z.array(AdjudicationSchema).min(1).max(10).optional(),
+  money_movements: z.array(MoneyMovementSchema).min(1).max(50).optional(),
+  dispute_life_cycle_stage: DisputeLifecycleStageSchema.readonly().optional(),
+  dispute_channel: DisputeChannelSchema.optional(),
+  messages: z.array(MessageSchema).min(1).max(1000).optional(),
+  extensions: ExtensionsSchema.optional(),
+  evidences: z.array(EvidenceSchema).min(1).max(100).optional(),
+  buyer_response_due_date: DateTimeSchema.readonly().optional(),
+  seller_response_due_date: DateTimeSchema.readonly().optional(),
+  offer: OfferSchema.readonly().optional(),
+  refund_details: RefundDetailsSchema.readonly().optional(),
+  communication_details: CommunicationDetailsSchema.optional(),
+  supporting_info: z.array(SupportingInfoSchema).min(1).max(100).readonly().optional(),
+  allowed_response_options: AllowedResponseOptionsSchema.readonly().optional(),
+  links: z.array(LinkDescriptionSchema.readonly()).min(1).max(10).readonly().optional(),
+});
+
+
 
 // --- Exports ---
 export {
@@ -1089,5 +1119,6 @@ export {
   Error500Schema,
   Error503Schema,
   CryptocurrencyQuantitySchema,
-  MessageSchema
+  MessageSchema,
+  DisputeSchema
 };
