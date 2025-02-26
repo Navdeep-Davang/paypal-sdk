@@ -18,6 +18,7 @@ import {
   Error503Schema,
   LinkDescriptionSchema,
   EventTypeSchema,
+  EventTypeListSchema,
   WebhookSchema,
   WebhookListSchema,
   PatchSchema,
@@ -60,6 +61,7 @@ export type Error500 = z.infer<typeof Error500Schema>;
 export type Error503 = z.infer<typeof Error503Schema>;
 export type LinkDescription = z.infer<typeof LinkDescriptionSchema>;
 export type EventType = z.infer<typeof EventTypeSchema>;
+export type EventTypeList = z.infer<typeof EventTypeListSchema>;
 export type Webhook = z.infer<typeof WebhookSchema>;
 export type WebhookList = z.infer<typeof WebhookListSchema>;
 export type Patch = z.infer<typeof PatchSchema>;

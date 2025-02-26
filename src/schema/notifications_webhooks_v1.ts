@@ -116,6 +116,10 @@ const EventTypeSchema = z.object({
   resource_versions: z.array(z.string()).readonly().optional()
 }).required({name: true});
 
+const EventTypeListSchema = z.object({
+  event_types: z.array(EventTypeSchema).optional(),
+});
+
 const WebhookSchema = z.object({
   id: z.string().readonly().optional(),
   url: z.string().url().max(2048).optional(),
@@ -245,6 +249,7 @@ export {
   Error503Schema,
   LinkDescriptionSchema,
   EventTypeSchema,
+  EventTypeListSchema,
   WebhookSchema,
   WebhookListSchema,
   PatchSchema,
