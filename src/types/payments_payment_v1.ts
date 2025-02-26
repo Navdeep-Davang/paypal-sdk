@@ -37,6 +37,7 @@ import {
   RefundRequestSchema,
   RefundSchema,
   DetailedRefundSchema,
+  SaleSchema,
   AuthorizationSchema,
   OrderSchema,
   CaptureSchema,
@@ -91,6 +92,7 @@ export type PaymentExecution = z.infer<typeof PaymentExecutionSchema>;
 export type RefundRequest = z.infer<typeof RefundRequestSchema>;
 export type Refund = z.infer<typeof RefundSchema>;
 export type DetailedRefund = z.infer<typeof DetailedRefundSchema>;
+export type Sale = z.infer<typeof SaleSchema>;
 export type Authorization = z.infer<typeof AuthorizationSchema>;
 export type Order = z.infer<typeof OrderSchema>;
 export type Capture = z.infer<typeof CaptureSchema>;

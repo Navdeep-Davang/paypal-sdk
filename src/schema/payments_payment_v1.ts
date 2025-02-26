@@ -600,6 +600,7 @@ export {
   AuthorizationSchemaAuthorizationSchema,
   OrderSchemaOrderSchema,
   CaptureSchemaCaptureSchema,
+  SaleSchema,
   AuthorizationSchema,
   OrderSchema,
   CaptureSchema,
