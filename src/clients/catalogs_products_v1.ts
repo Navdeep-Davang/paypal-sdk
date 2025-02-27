@@ -1,7 +1,6 @@
 // src/clients/catalogs_products_v1.ts
 
 
-import { z } from 'zod';
 import { request } from '../utils/request';
 import {
     Product,
