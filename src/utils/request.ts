@@ -1,13 +1,12 @@
 // src/utils/request.ts
-import { APIError } from './error';
+
+import { PayPalAPIError } from './error';
 
 interface RequestOptions extends RequestInit {
   apiKey?: string; // Add API key option
 }
 
-export async function request(url: string, options: RequestOptions = {}): Promise<any> { // Return type any for now
-  const baseUrl = "https://api.paypal.com"; // Or read from config
-  const fullUrl = `${baseUrl}${url}`;
+export async function request(url: string, options: RequestOptions): Promise<any> {
 
   try {
     const headers: Record<string, string> = {
@@ -19,36 +18,30 @@ export async function request(url: string, options: RequestOptions = {}): Promis
       headers['Authorization'] = `Bearer ${options.apiKey}`; // API Key Authentication
     }
 
-    const response = await fetch(fullUrl, {
+    const response = await fetch(url, {
       ...options,
       headers,
     });
 
     if (!response.ok) {
-      let message = `API Error: ${response.status} ${response.statusText}`;
-      let details: any = null;
+      let body: any;
+      let message = `PayPal API Error: ${response.status} ${response.statusText}`;
 
       try {
-        details = await response.json(); // Try to parse error details from JSON
-        message += ` - ${JSON.stringify(details)}`
-      } catch (parseError) {
-        // Could not parse JSON, just use the basic message
+        body = await response.json(); // Try to parse error response
+        if (body?.message) {
+          message = body.message; // Use PayPal-provided error message if available
+        }
+      } catch {
+        body = await response.text(); // Fallback to text if JSON parsing fails
       }
 
-      throw new APIError(message, response.status, details);
-    }
-
-    // Attempt to parse JSON, but handle cases where the response is not JSON
-    try {
-      return await response.json();
-    } catch (jsonError) {
-      // If it's not JSON, return the raw text (or handle differently)
-      return await response.text();
+      throw new PayPalAPIError(response.status, body, message);
     }
 
   } catch (error: any) {
-    if (error instanceof APIError) {
-      throw error; // Re-throw API errors
+    if (error instanceof PayPalAPIError) {
+      throw error; 
     }
     throw new Error(`Request failed: ${error.message}`);
   }
